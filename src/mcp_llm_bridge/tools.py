@@ -167,17 +167,38 @@ class DatabaseQueryTool:
         template_page = template_pdf.pages[0]
         page_width = float(template_page.mediabox.width)
         page_height = float(template_page.mediabox.height)
+        
+        print(f"PDF dimensions: width={page_width}, height={page_height}")
 
         # Create temporary PDF for drawing text
         packet = io.BytesIO()
         can = canvas.Canvas(packet, pagesize=(page_width, page_height))
+        
+        print(f"Canvas size: width={page_width}, height={page_height}")
+        print(f"Note: Input coordinates: x maps to width ({page_width}), y maps to height ({page_height})")
+        
+        # 首先移动到左下角
+        can.translate(0, 0)
+        # 然后旋转270度（-90度）使文字方向正确
+        can.rotate(-90)
+        # 最后移动canvas使绘图区域可见
+        can.translate(-page_height, 0)
 
-        # Add text at coordinates
+        # Add text at coordinates, adjusting for rotation
         for field, props in coordinates.items():
-            x = props["x"]
-            y = props["y"]
+            x = props["x"]  # 横向距离（从左边开始）
+            y = props["y"]  # 纵向距离（从底部开始）
             text = props["text"]
-            can.drawString(x, y, text)
+            print(f"Drawing text '{text}' at original coordinates: x={x}, y={y}")
+            
+            # 调整坐标转换逻辑：
+            # 1. x坐标变为旋转后的y轴位置（从右向左）
+            # 2. y坐标变为旋转后的x轴位置（从下向上）
+            rotated_x = x  # 保持x坐标不变
+            rotated_y = y  # 保持y坐标不变
+            
+            print(f"Drawing text '{text}' at rotated coordinates: ({rotated_x}, {rotated_y})")
+            can.drawString(rotated_x, rotated_y, text)
 
         can.save()
         packet.seek(0)

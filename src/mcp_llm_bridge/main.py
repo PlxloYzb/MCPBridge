@@ -36,6 +36,13 @@ async def main():
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     db_path = os.path.join(project_root, "test.db")
     
+    # Define paths for PDF processing
+    template_path = os.path.join(project_root, "tests", "template.pdf")
+    output_dir = os.path.join(project_root, "tests", "filled")
+    
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Configure bridge
     config = BridgeConfig(
         mcp_server_params=StdioServerParameters(
@@ -48,12 +55,16 @@ async def main():
             model=os.getenv("OPENAI_MODEL", "gpt-4o"),
             base_url=None
         ),
-        # llm_config=LLMConfig(
-        #     api_key="ollama",  # Can be any string for local testing
-        #     model="mistral-nemo:12b-instruct-2407-q8_0",
-        #     base_url="http://192.168.87.34:11434/v1"  # Point to your local model's endpoint
-        # ),
-        system_prompt="You are a helpful assistant that can use tools to help answer questions."
+        system_prompt=f"""You are a helpful assistant that can use tools to help answer questions.
+You can:
+1. Query the database using SQL
+2. Fill PDF forms by specifying coordinates and text
+
+For PDF operations, you'll need:
+- Template path: {template_path}
+- Output directory: {output_dir}
+- Coordinates (x, y) for each text field
+- The text content to fill"""
     )
     
     logger.info(f"Starting bridge with model: {config.llm_config.model}")
